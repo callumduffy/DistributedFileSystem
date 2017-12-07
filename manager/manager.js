@@ -44,14 +44,15 @@ managerNode.get('/login', (req,res) => {
 	  else if(response && response.body.status == 200){
 	  	//allow log in
 	  	//make res the UL/DL page
+	  	res.send('Logged in.');
 	  }
 	  else{
 	  	//no log in
 	  	//make res the login page again
+	  	res.send('Conn failed');
 	  }
 
 	});
-	res.send('working on it');
 });
 
 

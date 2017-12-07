@@ -1,0 +1,19 @@
+{
+  "name": "authentication",
+  "version": "1.0.0",
+  "description": "Authtication server for the DFS",
+  "main": "authentication.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "callumduffy\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[C\u001b[Chttp://github.com/callumduffy"
+  },
+  "author": "Callum Duffy",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.16.2",
+    "nodegit": "^0.20.3"
+  }
+}
