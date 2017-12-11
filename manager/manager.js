@@ -5,10 +5,12 @@ const fs = require('fs');
 const express = require('express');
 const bodyParser = require('body-parser');
 const querystring = require('querystring');
+var CryptoJS = require("crypto-js");
 var request = require('request');
 var formidable = require('formidable')
 var util = require('util');
 
+const serverKey = 'encryption';
 const managerNode = express();
 const PORT_NUM = 3000;
 managerNode.use(bodyParser.json());
@@ -27,35 +29,21 @@ managerNode.use(bodyParser.urlencoded({ extended: false }));
 
 //handler for initial setup of the server
 //for when a client wants to sign in
+
 managerNode.post('/login', (req,res) => {
-	//will send get req to authentication server on whether to allow access to the client
-	//if okay, will post on the UL/DL html file 
-	var email_string = req.body.Email;
-	var pword_string = req.body.Password;
-	console.log('email: ' + email_string + ' pword: ' + pword_string);
+	var ticket_encrypted = req.body.ticket;
+	var message_encrypted = req.body.message;
+	//must decrypt the ticket with server key
+	var ticket_bytes = CryptoJS.AES.decrypt(ticket_encrypted.toString(), serverKey);
+	var session_key = ticket_bytes.toString(CryptoJS.enc.Utf8);
+	//now use the sesh key to decrypt the message
+	var message_bytes = CryptoJS.AES.decrypt(message_encrypted.toString(), serverKey);
+	var message = message_bytes.toString(CryptoJS.enc.Utf8);
+	//now we send the index homepage for upload/download to the client
+	//they can work from there, they are now logged in.
+	//res.send(home.html);
 
-	//auth server not set up yet
-	request.post(
-        'http://localhost:3004/login',
-        { json: {
-          email : email_string,
-          password : pword_string
-      } }, (error, response, body) => {
-	  if(error){
-	  	console.log('Error on login there pal.');
-	  }
-	  else if(response && response.body.status == 200){
-	  	//allow log in
-	  	//make res the UL/DL page
-	  	res.send('Logged in.');
-	  }
-	  else{
-	  	//no log in
-	  	//make res the login page again
-	  	res.send('Conn failed');
-	  }
-
-	});
+	//possibly give them a json token now??? means we have timeout
 });
 
 managerNode.post('/register', (req,res) => {

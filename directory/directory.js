@@ -13,21 +13,38 @@ const PORT_NUM = 3005;
 directoryNode.use(bodyParser.json());
 directoryNode.use(bodyParser.urlencoded({ extended: true }));
 
-//first need to initialise the DB	
 let db = new sqlite3.Database('directory.db', (err) => {
 	if(err){
 		return console.error(err.message);
 	}
 	console.log('Connected to the in-memory SQlite database.');
 });
-db.run("CREATE TABLE IF NOT EXISTS users (email TEXT PRIMARY KEY, password TEXT NOT NULL)");
+db.run("CREATE TABLE IF NOT EXISTS File_Directory (name TEXT PRIMARY KEY, server_ip TEXT NOT NULL)");
 
-directoryNode.get('/login', (req,res) =>{
-	//making simple log in first, then adding auth
-	if (!req.body.email || !req.body.password) {
-    	return res.send(400);
-  	}
+//handler for when manager wants to know where a file is
+directoryNode.post('/download', (req,res) =>{
+	var file_string = req.body.name;
+	let sql = 'SELECT name fileName, server_ip ip FROM File_Directory WHERE name = ? ';
 
+	db.get(sql, [file_string], (err, row) => {
+		if(err){
+			console.log(err.message);
+			res.send('error, file doesnt exist');
+		}
+		else{
+			console.log('Found file');
+			res.json({ip: row.server_ip});
+		}
+
+	});
+
+});
+
+
+//handler for when the manager wants to upload a file
+//will have to decide how to decide which node to send a file to
+directoryNode('/upload', (req,res) =>{
+	var file_string = req.body.name;
 });
 
 
