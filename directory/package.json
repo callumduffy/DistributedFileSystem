@@ -1,0 +1,16 @@
+{
+  "name": "directory",
+  "version": "1.0.0",
+  "description": "Directory service for the distributed file system",
+  "main": "directory.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Callum Duffy",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.16.2",
+    "nodegit": "^0.20.3",
+    "request": "^2.83.0"
+  }
+}

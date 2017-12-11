@@ -4,10 +4,18 @@
 	</head>
 
 	<body>
-		<form method="get" action="http://localhost:3000/login">
+		<h1>LOGIN</h1>
+		<form method="post" action="http://localhost:3000/login">
 		<input name="Email" type="text" id="email" placeholder="Email" />
 		<input name="Password" type="Password" id="pword" placeholder="Password"/>
 		<input type="submit" value="Login">
+		</form>
+
+		<h1>REGISTER</h1>
+		<form method="post" action="http://localhost:3000/register">
+		<input name="Email" type="text" id="email" placeholder="Email" />
+		<input name="Password" type="Password" id="pword" placeholder="Password"/>
+		<input type="submit" value="Register">
 		</form> 
 	</body>
 
