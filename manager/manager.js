@@ -8,6 +8,9 @@ const querystring = require('querystring');
 var CryptoJS = require("crypto-js");
 var request = require('request');
 var util = require('util');
+var FormData = require('form-data');
+const formidable = require('formidable');
+var format = require('util').format;
 
 const serverKey = 'encryption';
 const managerNode = express();
@@ -40,12 +43,11 @@ managerNode.post('/login', (req,res) => {
 	var message = message_bytes.toString(CryptoJS.enc.Utf8);
 	//now we send the index homepage for upload/download to the client
 	//they can work from there, they are now logged in.
-	//if(message == 'login'){
+	if(message == 'login'){
 		console.log('Log in successful');
-		res.send('hello');
-		//res.sendFile('home.html', {root: __dirname });
+		res.sendFile('home.html', {root: __dirname });
 		//add in a token too 
-	//}
+	}
 });
 
 managerNode.post('/register', (req,res) => {
@@ -78,10 +80,14 @@ managerNode.post('/register', (req,res) => {
 
 
 //handler for when client wants to download a file
-managerNode.get('/download', (req,res) => {
-	//on DL, send get to dir service to get location of file @ 3005
-	//get server ip of file back
-	//send get to that server for file
+managerNode.post('/download', (req,res) => {
+	var filename = req.body.fileName;
+	console.log('file: ' + filename);
+
+	//need to send filename to directory server
+	//they will poll the DB, return node ip
+	//then we can request file
+	//send it back
 
 });
 
@@ -91,6 +97,26 @@ managerNode.post('/upload', (req,res) => {
 	//plan is to send name to dir service, if name doesnt exist, upload
 	//else ask client for a new name
 
+	// res.send(format('\nuploaded %s (%d Kb) to %s as %s'
+ //    , req.files.UploadFile.name
+ //    , req.files.UploadFile.size / 1024 | 0 
+ //    , req.files.UploadFile.path));
+
+	var form = new formidable.IncomingForm();
+	 if (!form) {
+      return res.status(400).send({ success: false, message: "No multipart/form-data detected with request."});
+    }
+	form.parse(req, function(err, fields, files) {
+		console.log('here');
+
+	     if(files.UploadFile){
+			res.send('Got file');
+			console.log('name: ' + files.UploadFile.path);
+		}
+		else{
+			
+		}
+	});
 });
 
 managerNode.listen(PORT_NUM, (err) => {

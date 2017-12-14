@@ -5,15 +5,15 @@
 
 	<body>
 		<h1>UPLOAD</h1>
-		<form method="post" action="http://localhost:3000/upload">
-		<input name="File" type="File" id="file" placeholder="Choose your file: " />
+		<form method="post" action="http://localhost:3000/upload" enctype="multipart/form-data">
+		<input name="UploadFile" type="File" placeholder="Choose your file to upload: " />
 		<input type="submit" value="Upload">
 		</form>
 
 		<h1>DOWNLOAD</h1>
 		<form method="post" action="http://localhost:3000/download">
-		<input name="Upload" type="File" id="file" placeholder="Enter file name to download: " />
-		<input type="submit" value="Register">
+		<input name="fileName" type="text" id="fileName" placeholder="Enter file name to download: " />
+		<input type="submit" value="Download">
 		</form> 
 	</body>
 
