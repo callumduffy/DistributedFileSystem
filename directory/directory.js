@@ -10,6 +10,7 @@ var request = require('request');
 
 const directoryNode = express();
 const PORT_NUM = 3005;
+var nodes = ['http://localhost://3001','http://localhost://3002','http://localhost://3003'];
 directoryNode.use(bodyParser.json());
 directoryNode.use(bodyParser.urlencoded({ extended: true }));
 
@@ -23,7 +24,8 @@ db.run("CREATE TABLE IF NOT EXISTS File_Directory (name TEXT PRIMARY KEY, server
 
 //handler for when manager wants to know where a file is
 directoryNode.post('/download', (req,res) =>{
-	var file_string = req.body.name;
+	var file_string = req.body.fileName;
+	console.log(file_string);
 	let sql = 'SELECT name fileName, server_ip ip FROM File_Directory WHERE name = ? ';
 
 	db.get(sql, [file_string], (err, row) => {
@@ -31,9 +33,12 @@ directoryNode.post('/download', (req,res) =>{
 			console.log(err.message);
 			res.send('error, file doesnt exist');
 		}
+		else if(!row){
+			res.status(404).send('row doesnt exist');
+		}
 		else{
 			console.log('Found file');
-			res.json({ip: row.server_ip});
+			res.status(200).json({ip: row.server_ip});
 		}
 
 	});
@@ -43,8 +48,23 @@ directoryNode.post('/download', (req,res) =>{
 
 //handler for when the manager wants to upload a file
 //will have to decide how to decide which node to send a file to
-directoryNode('/upload', (req,res) =>{
+directoryNode.post('/upload', (req,res) =>{
 	var file_string = req.body.name;
+	//random number between 0 and 2 for index
+	var rand = Math.floor(Math.random()*(2-0+1)+0); 
+
+	//insert to the table, if exists
+	let sql = 'INSERT INTO File_Directory VALUES(?,?)';
+	db.run(sql, [file_string,nodes[rand]], (err) =>{
+		if(err){
+			console.log(err.message);
+			res.json({status:404});
+		}
+		else{
+			console.log('inserted');
+			res.json({status:200});
+		}
+	});
 });
 
 

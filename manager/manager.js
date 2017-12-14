@@ -78,17 +78,32 @@ managerNode.post('/register', (req,res) => {
 	});
 })
 
-
 //handler for when client wants to download a file
 managerNode.post('/download', (req,res) => {
-	var filename = req.body.fileName;
-	console.log('file: ' + filename);
-
-	//need to send filename to directory server
-	//they will poll the DB, return node ip
-	//then we can request file
-	//send it back
-
+	if(req.body.fileName){
+		//poll directory service for the file
+		console.log(req.body.fileName);
+		request.post(
+       		'http://localhost:3005/download',
+       		{ json: {
+          		fileName : req.body.fileName
+     		} }, (error, response, body) => {
+    			if(error){
+    				res.send('Error communicating with directory service')
+     			}
+     			else if (response.status == 200){
+     				//send file to a node here
+     				res.send(response.body.ip);
+     				console.log('File Downloaded');
+     			}
+     			else{
+     				res.status(404).send('File not found');
+     			}
+     	});
+	}
+	else{
+		res.status(404).send('Must enter a file name');
+	}
 });
 
 
@@ -96,28 +111,37 @@ managerNode.post('/download', (req,res) => {
 managerNode.post('/upload', (req,res) => {
 	//plan is to send name to dir service, if name doesnt exist, upload
 	//else ask client for a new name
-
-	// res.send(format('\nuploaded %s (%d Kb) to %s as %s'
- //    , req.files.UploadFile.name
- //    , req.files.UploadFile.size / 1024 | 0 
- //    , req.files.UploadFile.path));
-
 	var form = new formidable.IncomingForm();
 	 if (!form) {
-      return res.status(400).send({ success: false, message: "No multipart/form-data detected with request."});
+      return res.status(400).send({ success: false, message: "No multipart/form-data detected."});
     }
 	form.parse(req, function(err, fields, files) {
 		console.log('here');
 
 	     if(files.UploadFile){
-			res.send('Got file');
-			console.log('name: ' + files.UploadFile.path);
+			//res.send('Got file');
+			//poll dir service to see where to send the file. then send it.
+			request.post(
+        		'http://localhost:3005/upload',
+        		{ json: {
+          			fileName : files.UploadFile.name,
+          			ood : false
+      			} }, (error, response, body) => {
+     				if(error){
+     					res.send('Error communicating with directory service')
+     				}
+     				else if (response.body.status == 200){
+     					//send file to a node here
+     					res.send('File Uploaded');
+     				}
+     		});
 		}
-		else{
-			
+		else{//no file
+			res.status(404).send('Must include a file');
 		}
 	});
 });
+
 
 managerNode.listen(PORT_NUM, (err) => {
 	if(err){
