@@ -1,11 +1,12 @@
 <html>
 	<head>
-
+		<script src="jquery-3.2.1.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.2/rollups/aes.js"></script>
 	</head>
 
 	<body>
 		<h1>LOGIN</h1>
-		<form method="post" action="http://localhost:3004/login">
+		<form method="post" id="details" action="http://localhost:3004/login">
 		<input name="Email" type="text" id="email" placeholder="Email" />
 		<input name="Password" type="Password" id="pword" placeholder="Password"/>
 		<input type="submit" value="Login">
@@ -17,6 +18,28 @@
 		<input name="Password" type="Password" id="pword" placeholder="Password"/>
 		<input type="submit" value="Register">
 		</form> 
+
+		<script type="text/javascript">
+			document.getElementById("details").onsubmit = function() {
+				var txt = $('#pword');
+				var text = $('#pword').val();
+				console.log(text);
+				var encrypted = CryptoJS.AES.encrypt(text, text).toString();
+				console.log('Hello ' + encrypted);
+  				txt.val(encrypted);
+			};
+		</script>
+
+		<script type="text/javascript">
+			$('#details').ajaxForm({
+       			url : 'http://localhost:3004/login', // or whatever
+       			dataType : 'json',
+        		success : function (response) {
+            		alert("The server says: " + response);
+        		}
+    	});
+
+		</script>
 	</body>
 
 </html>

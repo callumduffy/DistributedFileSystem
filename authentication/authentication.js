@@ -31,31 +31,30 @@ authNode.post('/login', (req,res) => {
 	console.log('Received login request.');
 	var email_string = req.body.Email;
 	var pword_encrypted = req.body.Password;
+	console.log(pword_encrypted);
 	var session_key = 'random_key';
-
-	//currently just have the pword encrypted done here instead of client side
-	//as havent written sample client yet
-	var ciphertext = CryptoJS.AES.encrypt(pword_encrypted, pword_encrypted);
-	console.log(ciphertext);
 
 	let sql = 'SELECT Email email, Password password FROM users WHERE email = ? ';
 
 	db.get(sql, [email_string], (err, row) => {
 		console.log(row.password);
-		var bytes  = CryptoJS.AES.decrypt(ciphertext.toString(), row.password);
+		var bytes  = CryptoJS.AES.decrypt(pword_encrypted.toString(), row.password);
 		var pword_decrypted = bytes.toString(CryptoJS.enc.Utf8);
 		//get pword and decypt users pword with it
 	    if(pword_decrypted == row.password){
 	    	console.log('Password decrypted successfully');
-	    	res.send('deciphered');
-
+	    	//res.send('deciphered');
 	    	//now to encrypt the (ticket, server ip, and the session key) = token -> encryped with pword
 	    	//(session key) = ticket -> encrypted with server encryption key
-	    	var ticket = CryptoJS.AES.encrypt(session_key, serverKey);
-	    	var token_decrypted = {ticket_key: ticket, server_ip_key: server_ip, sesh_key: session_key };
-	    	var token_encrypted = CryptoJS.AES.encrypt(JSON.stringify(token), pword_decrypted);
+	    	var ticket = CryptoJS.AES.encrypt(session_key, serverKey).toString();
+	    	var ip_key = CryptoJS.AES.encrypt(server_ip, pword_decrypted).toString();
+	    	var sesh_key = CryptoJS.AES.encrypt(session_key, pword_decrypted).toString();
+	    	// var part = {server_ip_key: server_ip, sesh_key: session_key };
+	    	// var token_encrypted = CryptoJS.AES.encrypt(JSON.stringify(part), pword_decrypted).toString();
+	    	// var token = {ticket_key: ticket, ip_and_sesh: token_encrypted};
+	    	var token = {ticket: ticket, ip_key: ip_key, sesh_key: sesh_key};
 	    	//send encrypted data
-	    	res.json({token: token_encrypted});
+	    	res.json(token);
 	    }
 	    else if(err){
 	    	console.log(err.message);

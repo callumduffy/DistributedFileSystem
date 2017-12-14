@@ -7,14 +7,13 @@ const bodyParser = require('body-parser');
 const querystring = require('querystring');
 var CryptoJS = require("crypto-js");
 var request = require('request');
-var formidable = require('formidable')
 var util = require('util');
 
 const serverKey = 'encryption';
 const managerNode = express();
 const PORT_NUM = 3000;
 managerNode.use(bodyParser.json());
-managerNode.use(bodyParser.urlencoded({ extended: false }));
+managerNode.use(bodyParser.urlencoded({ extended: true }));
 
 //gonna be the server that manages everything, client proxy if you will
 //will connect to the nodes containing the files
@@ -34,20 +33,23 @@ managerNode.post('/login', (req,res) => {
 	var ticket_encrypted = req.body.ticket;
 	var message_encrypted = req.body.message;
 	//must decrypt the ticket with server key
-	var ticket_bytes = CryptoJS.AES.decrypt(ticket_encrypted.toString(), serverKey);
+	var ticket_bytes = CryptoJS.AES.decrypt(ticket_encrypted, serverKey);
 	var session_key = ticket_bytes.toString(CryptoJS.enc.Utf8);
 	//now use the sesh key to decrypt the message
-	var message_bytes = CryptoJS.AES.decrypt(message_encrypted.toString(), serverKey);
+	var message_bytes = CryptoJS.AES.decrypt(message_encrypted, session_key);
 	var message = message_bytes.toString(CryptoJS.enc.Utf8);
 	//now we send the index homepage for upload/download to the client
 	//they can work from there, they are now logged in.
-	//res.send(home.html);
-
-	//possibly give them a json token now??? means we have timeout
+	//if(message == 'login'){
+		console.log('Log in successful');
+		res.send('hello');
+		//res.sendFile('home.html', {root: __dirname });
+		//add in a token too 
+	//}
 });
 
 managerNode.post('/register', (req,res) => {
-	var email_string = req.body.Email;
+	var email_string = req.body.ticket;
 	var pword_string = req.body.Password;
 	console.log('email: ' + email_string + ' pword: ' + pword_string);
 
