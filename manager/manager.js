@@ -82,18 +82,19 @@ managerNode.post('/register', (req,res) => {
 managerNode.post('/download', (req,res) => {
 	if(req.body.fileName){
 		//poll directory service for the file
-		console.log(req.body.fileName);
+		//console.log(req.body.fileName);
 		request.post(
        		'http://localhost:3005/download',
        		{ json: {
           		fileName : req.body.fileName
      		} }, (error, response, body) => {
+     			console.log(response.status);
     			if(error){
     				res.send('Error communicating with directory service')
      			}
-     			else if (response.status == 200){
+     			else if (response.body.status == 200){
      				//send file to a node here
-     				res.send(response.body.ip);
+     				res.status(200).send(response.body.ip);
      				console.log('File Downloaded');
      			}
      			else{
@@ -130,9 +131,9 @@ managerNode.post('/upload', (req,res) => {
      				if(error){
      					res.send('Error communicating with directory service')
      				}
-     				else if (response.body.status == 200){
+     				else if (response.status == 200){
      					//send file to a node here
-     					res.send('File Uploaded');
+     					res.status(200).send('File Uploaded');
      				}
      		});
 		}

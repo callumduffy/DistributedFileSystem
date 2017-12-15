@@ -26,19 +26,21 @@ db.run("CREATE TABLE IF NOT EXISTS File_Directory (name TEXT PRIMARY KEY, server
 directoryNode.post('/download', (req,res) =>{
 	var file_string = req.body.fileName;
 	console.log(file_string);
-	let sql = 'SELECT name fileName, server_ip ip FROM File_Directory WHERE name = ? ';
+	let sql = 'SELECT name fileName, server_ip ip FROM File_Directory WHERE fileName = ? ';
 
 	db.get(sql, [file_string], (err, row) => {
+		console.log(row.fileName);
 		if(err){
 			console.log(err.message);
-			res.send('error, file doesnt exist');
+			res.send('Error on SQL query');
 		}
 		else if(!row){
-			res.status(404).send('row doesnt exist');
+			res.json({msg:'Error: File doesnt exist', status: 404});
 		}
 		else{
 			console.log('Found file');
-			res.status(200).json({ip: row.server_ip});
+			console.log('Has it worked? - ' + row.ip)
+			res.json({ip:row.ip, status:200});
 		}
 
 	});
@@ -49,20 +51,20 @@ directoryNode.post('/download', (req,res) =>{
 //handler for when the manager wants to upload a file
 //will have to decide how to decide which node to send a file to
 directoryNode.post('/upload', (req,res) =>{
-	var file_string = req.body.name;
+	var file_string = req.body.fileName;
 	//random number between 0 and 2 for index
 	var rand = Math.floor(Math.random()*(2-0+1)+0); 
 
 	//insert to the table, if exists
 	let sql = 'INSERT INTO File_Directory VALUES(?,?)';
-	db.run(sql, [file_string,nodes[rand]], (err) =>{
+	db.run(sql, [file_string,(nodes[rand])], (err) =>{
 		if(err){
 			console.log(err.message);
-			res.json({status:404});
+			res.status(404);
 		}
 		else{
 			console.log('inserted');
-			res.json({status:200});
+			res.status(200);
 		}
 	});
 });
