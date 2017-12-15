@@ -10,7 +10,7 @@ var request = require('request');
 
 const directoryNode = express();
 const PORT_NUM = 3005;
-var nodes = ['http://localhost://3001','http://localhost://3002','http://localhost://3003'];
+var nodes = ['http://localhost:3001','http://localhost:3002','http://localhost:3003'];
 directoryNode.use(bodyParser.json());
 directoryNode.use(bodyParser.urlencoded({ extended: true }));
 
@@ -39,8 +39,7 @@ directoryNode.post('/download', (req,res) =>{
 		}
 		else{
 			console.log('Found file');
-			console.log('Has it worked? - ' + row.ip)
-			res.json({ip:row.ip, status:200});
+			res.send({ip:row.ip, status:200});
 		}
 
 	});
@@ -60,11 +59,11 @@ directoryNode.post('/upload', (req,res) =>{
 	db.run(sql, [file_string,(nodes[rand])], (err) =>{
 		if(err){
 			console.log(err.message);
-			res.status(404);
+			res.send({status:404, error: err.message})
 		}
 		else{
 			console.log('inserted');
-			res.status(200);
+			res.send({status:200, ip:nodes[rand]});
 		}
 	});
 });

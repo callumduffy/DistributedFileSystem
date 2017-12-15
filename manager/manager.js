@@ -81,6 +81,8 @@ managerNode.post('/register', (req,res) => {
 //handler for when client wants to download a file
 managerNode.post('/download', (req,res) => {
 	if(req.body.fileName){
+		var fileName = req.body.fileName;
+		var ip = 'temp';
 		//poll directory service for the file
 		//console.log(req.body.fileName);
 		request.post(
@@ -88,19 +90,41 @@ managerNode.post('/download', (req,res) => {
        		{ json: {
           		fileName : req.body.fileName
      		} }, (error, response, body) => {
-     			console.log(response.status);
     			if(error){
     				res.send('Error communicating with directory service')
      			}
      			else if (response.body.status == 200){
-     				//send file to a node here
-     				res.status(200).send(response.body.ip);
-     				console.log('File Downloaded');
+     				ip = response.body.ip;
+     				console.log('File Found on directory, is at IP: ' + ip);
      			}
      			else{
      				res.status(404).send('File not found');
      			}
      	});
+		//now get the data from the file server
+		request.post(
+       		ip + '/download',
+       		{ json: {
+          		fileName : req.body.fileName
+     		} }, (error, response, body) => {
+    			if(error){
+    				res.send('Error communicating with file server')
+     			}
+     			else if (response.body.status == 200){
+     				//send file to client here
+     				var form = new formidable.IncomingForm();
+	 				if (!form) {
+      					return res.status(400).send({ success: false, message: "No multipart/form-data detected."});
+    				}
+					form.parse(req, function(err, fields, files) {
+
+					});
+     			}
+     			else{
+     				res.status(404).send('File not found');
+     			}
+     	});
+		res.status(200).send(response.body.ip);
 	}
 	else{
 		res.status(404).send('Must enter a file name');
@@ -112,15 +136,23 @@ managerNode.post('/download', (req,res) => {
 managerNode.post('/upload', (req,res) => {
 	//plan is to send name to dir service, if name doesnt exist, upload
 	//else ask client for a new name
+	var filePath;
+	var ip;
+	var fileName;
+
+	//have to make sure to save the path of the temp file
 	var form = new formidable.IncomingForm();
-	 if (!form) {
+	form.uploadDir = path.join(__dirname,'/temp/files');
+	form.keepExtensions = true;
+	if (!form) {
       return res.status(400).send({ success: false, message: "No multipart/form-data detected."});
     }
 	form.parse(req, function(err, fields, files) {
-		console.log('here');
 
 	     if(files.UploadFile){
 			//res.send('Got file');
+			filePath = files.UploadFile.path;
+			fileName = files.UploadFile.name;
 			//poll dir service to see where to send the file. then send it.
 			request.post(
         		'http://localhost:3005/upload',
@@ -131,9 +163,21 @@ managerNode.post('/upload', (req,res) => {
      				if(error){
      					res.send('Error communicating with directory service')
      				}
-     				else if (response.status == 200){
+     				else if (response.body.status == 200){
      					//send file to a node here
-     					res.status(200).send('File Uploaded');
+     					ip = response.body.ip;
+     					var fileReq = request.post(ip + '/upload', function (err, resp, bod) {
+					  		if (err) {
+					    		console.log(err.message);
+					    		res.status(404).send('Couldnt upload to server');
+					  		} else {
+					    		console.log(resp.body.msg);
+					    		res.status(200).send('File Uploaded');
+					  		}
+						});
+						var form = fileReq.form();
+						form.append('file', fs.createReadStream(filePath));
+						form.append('fileName', fileName);
      				}
      		});
 		}
@@ -141,8 +185,10 @@ managerNode.post('/upload', (req,res) => {
 			res.status(404).send('Must include a file');
 		}
 	});
+	form.on('fileBegin', function(name, file) {
+		file.path = form.uploadDir + "/" + file.name;
+	});
 });
-
 
 managerNode.listen(PORT_NUM, (err) => {
 	if(err){
