@@ -18,17 +18,6 @@ const PORT_NUM = 3000;
 managerNode.use(bodyParser.json());
 managerNode.use(bodyParser.urlencoded({ extended: true }));
 
-//gonna be the server that manages everything, client proxy if you will
-//will connect to the nodes containing the files
-//each node will just be a reader or a writer to a MySQL DB
-
-//manager will also need to speak to the directory service
-//this will allow the manager to know which server node each file is on
-
-//will have to have some form of user interface to allow the client to communicate
-//this will allow UL/DL of files, and also -> sign in
-//this will be managed by the authentication server
-
 //handler for initial setup of the server
 //for when a client wants to sign in
 
@@ -87,44 +76,57 @@ managerNode.post('/download', (req,res) => {
 	if(req.body.fileName){
 		var fileName = req.body.fileName;
 		var ip ;
-		var client_ip = req.ip;
-		var ips = req.ips;
-		console.log('ip:'+ client_ip + ' - ips:' + ips);
-		//poll directory service for the file
-		//console.log(req.body.fileName);
+
 		request.post(
-       		'http://localhost:3005/download',
-       		{ json: {
-          		fileName : req.body.fileName
-     		} }, (error, response, body) => {
-    			if(error){
-    				res.send('Error communicating with directory service')
-     			}
-     			else if (response.body.status == 200){
-     				ip = response.body.ip;
-     				console.log('File Found on directory, is at IP: ' + ip);
-     				request.post(
-			       		ip + '/download',
+			'http://localhost:3006/checkCache',
+			{ json: {
+				fileName: fileName
+			}}, (error, response, body) =>{
+				if(error){
+					console.log('Couldnt communicate with cache');
+				}
+				else if(response.body.status ==200){
+					console.log('Sent file from cache');
+					res.status(200).download(response.body.path);
+				}
+				else{
+					request.post(
+			       		'http://localhost:3005/download',
 			       		{ json: {
-			          		fileName : req.body.fileName,
-			          		ip: client_ip
+			          		fileName : req.body.fileName
 			     		} }, (error, response, body) => {
 			    			if(error){
-			    				res.send('Error communicating with file server')
+			    				res.send('Error communicating with directory service')
 			     			}
 			     			else if (response.body.status == 200){
-			     				console.log('file seems to have been sent');
-			     				res.status(200).download(response.body.path);
+			     				ip = response.body.ip;
+			     				console.log('File Found on directory, is at IP: ' + ip);
+			     				request.post(
+						       		ip + '/download',
+						       		{ json: {
+						          		fileName : req.body.fileName,
+						          		ip: client_ip
+						     		} }, (error, response, body) => {
+						    			if(error){
+						    				res.send('Error communicating with file server')
+						     			}
+						     			else if (response.body.status == 200){
+						     				console.log('file seems to have been sent');
+						     				res.status(200).download(response.body.path);
+						     			}
+						     			else{
+						     				res.status(404).send('File not found');
+						     			}
+						     	});
 			     			}
 			     			else{
 			     				res.status(404).send('File not found');
 			     			}
 			     	});
-     			}
-     			else{
-     				res.status(404).send('File not found');
-     			}
-     	});
+				}
+		});
+		//poll directory service for the file
+		//console.log(req.body.fileName);
 		//now get the data from the file server
 	}
 	else{
@@ -173,20 +175,32 @@ managerNode.post('/upload', (req,res) => {
 					    		res.status(404).send('Couldnt upload to server');
 					  		} else {
 					    		console.log(resp.body.msg);
-					    		fs.unlink(filePath, (err)=>{
-					    			if(err){
-					    				console.log('Error deleting temp file');
-					    			}
-					    			else{
-					    			console.log('Temp file deleted');
-					    		}
-					    		});
-					    		res.status(200).send('File Uploaded');
+					    		//now we want to add the file to the cache
+					    		var cacheReq = request.post('http://localhost:3006/addToCache', function (err, resp, bod) {
+							  		if (err) {
+							    		console.log('Error sending to cache');
+							    		console.log(err.message);
+							    		deleteTempFile(filePath);
+							    		res.status(200).send('File Uploaded but error connecting to the cache.');
+							  		} else if(resp.body.status == 200){
+							    		console.log('File added to cache');
+							    		deleteTempFile(filePath);
+							    		res.status(200).send('File Uploaded and Cached.');
+							  		}
+							  		else{
+							  			console.log(resp.body.msg);
+							  			deleteTempFile(filePath);
+							  			res.status(200).send('File Uploaded but is already in cache');
+							  		}
+								});
+								var cform = cacheReq.form();
+								cform.append('file', fs.createReadStream(filePath));
+								cform.append('fileName', fileName);
 					  		}
 						});
-						var form = fileReq.form();
-						form.append('file', fs.createReadStream(filePath));
-						form.append('fileName', fileName);
+						var uform = fileReq.form();
+						uform.append('file', fs.createReadStream(filePath));
+						uform.append('fileName', fileName);
      				}
      		});
 		}
@@ -198,6 +212,17 @@ managerNode.post('/upload', (req,res) => {
 		file.path = form.uploadDir + "/" + file.name;
 	});
 });
+
+function deleteTempFile(filePath){
+	fs.unlink(filePath, (err)=>{
+		if(err){
+			console.log('Error deleting temp file');
+		}
+		else{
+			console.log('Temp file deleted');
+		}
+	});
+}
 
 managerNode.listen(PORT_NUM, (err) => {
 	if(err){
