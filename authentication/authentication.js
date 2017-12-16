@@ -33,6 +33,7 @@ authNode.post('/login', (req,res) => {
 	var pword_encrypted = req.body.Password;
 	console.log(pword_encrypted);
 	var session_key = 'random_key';
+	var login_key = 'login';
 
 	let sql = 'SELECT Email email, Password password FROM users WHERE email = ? ';
 
@@ -49,12 +50,24 @@ authNode.post('/login', (req,res) => {
 	    	var ticket = CryptoJS.AES.encrypt(session_key, serverKey).toString();
 	    	var ip_key = CryptoJS.AES.encrypt(server_ip, pword_decrypted).toString();
 	    	var sesh_key = CryptoJS.AES.encrypt(session_key, pword_decrypted).toString();
-	    	// var part = {server_ip_key: server_ip, sesh_key: session_key };
-	    	// var token_encrypted = CryptoJS.AES.encrypt(JSON.stringify(part), pword_decrypted).toString();
-	    	// var token = {ticket_key: ticket, ip_and_sesh: token_encrypted};
 	    	var token = {ticket: ticket, ip_key: ip_key, sesh_key: sesh_key};
 	    	//send encrypted data
-	    	res.json(token);
+	    	//now send to client server, then post info back to browser
+	    	request.post('http://localhost:3006/login', 
+	    	{json:{
+	    		token: token
+	    	}}, (error, response, body) =>{
+	    		//handle data back from client server here
+	    		if(error){
+	    			console.log('Error communicating with the Client for login - Err: ' + error.message);
+	    		}
+	    		else if(response.body.status ==200){
+	    			res.status(200).sendFile(path.join(__dirname,'home.html'));
+	    		}
+	    		else{
+	    			res.status(404).send('Login process failed.')
+	    		}
+	    	});
 	    }
 	    else if(err){
 	    	console.log(err.message);

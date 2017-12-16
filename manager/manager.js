@@ -33,6 +33,7 @@ managerNode.use(bodyParser.urlencoded({ extended: true }));
 //for when a client wants to sign in
 
 managerNode.post('/login', (req,res) => {
+	console.log('got to login');
 	var ticket_encrypted = req.body.ticket;
 	var message_encrypted = req.body.message;
 	//must decrypt the ticket with server key
@@ -41,12 +42,15 @@ managerNode.post('/login', (req,res) => {
 	//now use the sesh key to decrypt the message
 	var message_bytes = CryptoJS.AES.decrypt(message_encrypted, session_key);
 	var message = message_bytes.toString(CryptoJS.enc.Utf8);
+	console.log(message);
 	//now we send the index homepage for upload/download to the client
 	//they can work from there, they are now logged in.
 	if(message == 'login'){
-		console.log('Log in successful');
-		res.sendFile('home.html', {root: __dirname });
-		//add in a token too 
+		res.send({status:200, msg: 'how'});
+	}
+	else{
+		console.log('login message incorrect');
+		res.send({status:404, err_msg: 'login message incorrect'});
 	}
 });
 
@@ -82,7 +86,10 @@ managerNode.post('/register', (req,res) => {
 managerNode.post('/download', (req,res) => {
 	if(req.body.fileName){
 		var fileName = req.body.fileName;
-		var ip = 'temp';
+		var ip ;
+		var client_ip = req.ip;
+		var ips = req.ips;
+		console.log('ip:'+ client_ip + ' - ips:' + ips);
 		//poll directory service for the file
 		//console.log(req.body.fileName);
 		request.post(
@@ -96,35 +103,29 @@ managerNode.post('/download', (req,res) => {
      			else if (response.body.status == 200){
      				ip = response.body.ip;
      				console.log('File Found on directory, is at IP: ' + ip);
+     				request.post(
+			       		ip + '/download',
+			       		{ json: {
+			          		fileName : req.body.fileName,
+			          		ip: client_ip
+			     		} }, (error, response, body) => {
+			    			if(error){
+			    				res.send('Error communicating with file server')
+			     			}
+			     			else if (response.body.status == 200){
+			     				console.log('file seems to have been sent');
+			     				res.status(200).download(response.body.path);
+			     			}
+			     			else{
+			     				res.status(404).send('File not found');
+			     			}
+			     	});
      			}
      			else{
      				res.status(404).send('File not found');
      			}
      	});
 		//now get the data from the file server
-		request.post(
-       		ip + '/download',
-       		{ json: {
-          		fileName : req.body.fileName
-     		} }, (error, response, body) => {
-    			if(error){
-    				res.send('Error communicating with file server')
-     			}
-     			else if (response.body.status == 200){
-     				//send file to client here
-     				var form = new formidable.IncomingForm();
-	 				if (!form) {
-      					return res.status(400).send({ success: false, message: "No multipart/form-data detected."});
-    				}
-					form.parse(req, function(err, fields, files) {
-
-					});
-     			}
-     			else{
-     				res.status(404).send('File not found');
-     			}
-     	});
-		res.status(200).send(response.body.ip);
 	}
 	else{
 		res.status(404).send('Must enter a file name');
@@ -172,6 +173,14 @@ managerNode.post('/upload', (req,res) => {
 					    		res.status(404).send('Couldnt upload to server');
 					  		} else {
 					    		console.log(resp.body.msg);
+					    		fs.unlink(filePath, (err)=>{
+					    			if(err){
+					    				console.log('Error deleting temp file');
+					    			}
+					    			else{
+					    			console.log('Temp file deleted');
+					    		}
+					    		});
 					    		res.status(200).send('File Uploaded');
 					  		}
 						});

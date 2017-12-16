@@ -39,28 +39,46 @@ fileNode.post('/upload', (req,res) => {
 //handler for sending a file back to the proxy on receipt of a file name
 fileNode.post('/download', (req,res) =>{
 	var fileName = req.body.fileName;
+	var client_ip = req.body.ip;
+	var subpath = '/files/' + fileName;
 	console.log('made it here on DL');
 	if(!fileName){
 		res.send({status:404,err:'Must contain a file name'});
 	}
 	else{
-		var filePath = path.join(__dirname,fileName);
+		var filePath = path.join(__dirname,subpath);
 		if(!fs.existsSync(filePath)){
 			res.send({status:404,err:'File is not on this server'});
 		}
 		else{
 			console.log('File Found, ready to send');
-			var form = res.form();
-			form.append('file', fs.createReadStream(filePath));
-			form.append('fileName', fileName);
-			res.send({status:200, msg: 'Downloaded'});
+			//res.send({status:200, msg: 'Downloaded'});
+			//send path to proxy and sexy direct download link to client
+			res.send({status:200, path:filePath});
+
+			// var fileReq = request.post(client_ip, function (err, resp, bod) {
+			// 	if (err) {
+			// 		console.log(err.message);
+			// 		} 
+			// 	else {
+			// 		console.log('File sent to client');
+			// 	}
+			// });
+			// var form = fileReq.form();
+			// form.append('file', fs.createReadStream(filePath));
+			// form.append('fileName', fileName);
+
+			// res.append('file', fs.createReadStream(filePath));
+			// res.append('fileName', fileName);
+			// res.attachment(filePath);
+			// res.sendFile(filePath);
 		}
 	}
 });
 
 fileNode.listen(PORT_NUM, (err) => {
 	if(err){
-		return console.log('File Server cannot liten on port: '+ PORT_NUM);
+		return console.log('File Server cannot listen on port: '+ PORT_NUM);
 	}
 	console.log('File Server listening on port: ' + PORT_NUM);
 });

@@ -1,0 +1,20 @@
+<html>
+	<head>
+
+	</head>
+
+	<body>
+		<h1>UPLOAD</h1>
+		<form method="post" action="http://localhost:3000/upload" enctype="multipart/form-data">
+		<input name="UploadFile" type="File" placeholder="Choose your file to upload: " />
+		<input type="submit" value="Upload">
+		</form>
+
+		<h1>DOWNLOAD</h1>
+		<form method="post" action="http://localhost:3000/download">
+		<input name="fileName" type="text" id="fileName" placeholder="Enter file name to download: " />
+		<input type="submit" value="Download">
+		</form> 
+	</body>
+
+</html>

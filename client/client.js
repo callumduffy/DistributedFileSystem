@@ -12,44 +12,62 @@ clientNode.use(bodyParser.json());
 clientNode.use(bodyParser.urlencoded({ extended: true }));
 
 var pword = process.argv[2];
-var ip = process.argv[3];
-var sesh = process.argv[4];
-var ticket_string = process.argv[5];
+const PORT_NUM = 3006;
 
-//decrypt the ip_and sesh key with the args values
-var ip_bytes = CryptoJS.AES.decrypt(ip, pword);
-var server_ip = ip_bytes.toString(CryptoJS.enc.Utf8);
-console.log('IP: '+ server_ip);
+clientNode.get('/', (req,res) =>{
+	//to start up the File system, send Login page
+	res.sendFile(path.join(__dirname,'index.html'));
+});
 
-var sesh_bytes = CryptoJS.AES.decrypt(sesh, pword);
-var session_key = sesh_bytes.toString(CryptoJS.enc.Utf8);
-console.log('SK: '+ session_key);
+clientNode.post('/login', (req,res) =>{
+	if(!req.body){
+		console.log('Error, not token received.');
+	}
+	else{
+		var token = req.body.token;
+		var ip = token.ip_key;
+		var sesh = token.sesh_key;
+		var ticket_string = token.ticket;
+		//decrypt the ip_and sesh key with the args values
+		var ip_bytes = CryptoJS.AES.decrypt(ip, pword);
+		var server_ip = ip_bytes.toString(CryptoJS.enc.Utf8);
+		console.log('IP: '+ server_ip);
 
-//create encrypted msg
-var s = 'login';
-var msg = CryptoJS.AES.encrypt(s, session_key).toString();
+		var sesh_bytes = CryptoJS.AES.decrypt(sesh, pword);
+		var session_key = sesh_bytes.toString(CryptoJS.enc.Utf8);
+		console.log('SK: '+ session_key);
 
-//create request and send it to the proxy
-//get response of a token
-request.post(
-        'http://localhost:3000/login',
-        { json: {
-          ticket : ticket_string,
-          message : msg
-      } }, (error, response, body) => {
-	  if(error){
-	  	console.log('Error on register there pal.');
-	  }
-	  else if(response && response.body.status == 200){
-	  	//allow register
-	  	//make res the UL/DL page
-	  	res.send('Registered');
-	  }
-	  else{
-	  	//no log in
-	  	//make res the login page again
-	  	//res.send('Conn failed');
-	  	console.log('well');
-	  }
+		//create encrypted msg
+		var s = 'login';
+		var msg = CryptoJS.AES.encrypt(s, session_key).toString();
 
-	});
+		//create request and send it to the proxy
+		//get response of a token
+		request.post(
+		        'http://localhost:3000/login',
+		        { json: {
+		          ticket : ticket_string,
+		          message : msg
+		      } }, (error, response, body) => {
+			  if(error){
+			  	console.log('Error connecting to the Proxy for login');
+			  }
+			  else if(response && response.body.status == 200){
+			  	//now send response to the AS to say we are logged in
+			  	console.log(response.body.msg);
+			  	res.send({status:200});
+			  }
+			  else{
+			  	//tell AS that login failed
+			  	res.send({status:404, err: response.body.err_msg});
+			  }
+		});
+	}
+});
+
+clientNode.listen(PORT_NUM, (err) => {
+	if(err){
+		return console.log('Client cannot listen on port: '+ PORT_NUM);
+	}
+	console.log('Client listening on port: ' + PORT_NUM);
+});
