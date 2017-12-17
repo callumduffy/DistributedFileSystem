@@ -23,9 +23,9 @@
 			document.getElementById("details").onsubmit = function() {
 				var txt = $('#pword_login');
 				var text = $('#pword_login').val();
-				console.log(text);
+				var pair = {password: text}
 				var encrypted = CryptoJS.AES.encrypt(text, text).toString();
-				console.log('Hello ' + encrypted);
+				$.post('http://localhost:3006/storePW', pair);
   				txt.val(encrypted);
 			};
 		</script>

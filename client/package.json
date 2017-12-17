@@ -4,6 +4,7 @@
   "description": "sample client for my file server",
   "main": "client.js",
   "scripts": {
+	"start" : "node client.js 3006",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Callum Duffy",
@@ -14,8 +15,10 @@
     "cacheman-file": "^0.2.1",
     "crypto-js": "^3.1.9-1",
     "express": "^4.16.2",
+    "form-data": "^2.3.1",
     "formidable": "^1.1.1",
     "node-file-cache": "^1.0.2",
+    "querystring": "^0.2.0",
     "request": "^2.83.0"
   }
 }

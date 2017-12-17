@@ -4,6 +4,7 @@
   "description": "Authtication server for the DFS",
   "main": "authentication.js",
   "scripts": {
+	"start" : "node authentication.js 3004",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -17,6 +18,8 @@
     "crypto-js": "^3.1.9-1",
     "express": "^4.16.2",
     "nodegit": "^0.20.3",
+    "querystring": "^0.2.0",
+    "request": "^2.83.0",
     "sqlite3": "^3.1.13"
   }
 }

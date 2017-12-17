@@ -22,6 +22,19 @@ let db = new sqlite3.Database('directory.db', (err) => {
 });
 db.run("CREATE TABLE IF NOT EXISTS File_Directory (name TEXT PRIMARY KEY, server_ip TEXT NOT NULL)");
 
+//handler to show the client the files on the server
+directoryNode.get('/getFiles', (req,res) =>{
+	var htmlcontent = '<p>';
+	db.all("SELECT * FROM File_Directory", function(err, rows) {  
+    rows.forEach(function (row) {  
+        htmlcontent += row.name + ', ';
+    });
+    htmlcontent += '<br/>PRESS BACK TO RETURN TO HOME PAGE.';
+
+    res.send(htmlcontent);  
+});
+});
+
 //handler for when manager wants to know where a file is
 directoryNode.post('/download', (req,res) =>{
 	var file_string = req.body.fileName;
@@ -29,10 +42,10 @@ directoryNode.post('/download', (req,res) =>{
 	let sql = 'SELECT name fileName, server_ip ip FROM File_Directory WHERE fileName = ? ';
 
 	db.get(sql, [file_string], (err, row) => {
-		console.log(row.fileName);
 		if(err){
 			console.log(err.message);
-			res.send('Error on SQL query');
+			console.log('error');
+			res.send({status:400, msg:'Please change file name'});
 		}
 		else if(!row){
 			res.json({msg:'Error: File doesnt exist', status: 404});

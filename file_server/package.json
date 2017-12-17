@@ -4,11 +4,23 @@
   "description": "nodes for storing files",
   "main": "file_server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "npm-run-all -p SERVER_1, SERVER_2, SERVER_3",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "SERVER_1": "node file_server.js 3001",
+    "SERVER_2": "node file_server.js 3002",
+    "SERVER_3": "node file_server.js 3003"
   },
   "author": "Callum Duffy",
   "license": "ISC",
   "dependencies": {
-    "express": "^4.16.2"
+    "body-parser": "^1.18.2",
+    "express": "^4.16.2",
+    "form-data": "^2.3.1",
+    "formidable": "^1.1.1",
+    "querystring": "^0.2.0",
+    "request": "^2.83.0"
+  },
+  "devDependencies": {
+    "npm-run-all": "^4.1.2"
   }
 }

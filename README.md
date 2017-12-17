@@ -1,13 +1,28 @@
 # DistributedFileSystem
 Distributed File System for Internet Applications module in Trinity College Dublin.
 
+## Setup and Run  
+Dependent on having nodejs and npm installed.  
+CURRENT RUN: to run at the moment, open each directory in the package at cmd and run npm install then npm start.  
+Except for the file server, run npm install. Then open two more new cmd windows here, run "node file_server 300X" from X={1,2,3}.  
+  
+UPDATING RUN TO ADD BATCH FILES TO MAKE RUN EASIER FOR DEMO  
+  
+
+README WILL ALSO BE UPDATED TO SHOW FULL FUNCTIONALITY OF APPLICATION  
+Features are
+> Distributed transparent file access  
+> Caching  
+> Directory  
+> Authentication  
+
 ## Login  
 Client initially must login, this is done by sending their email, and their encrypted password to the Authtication Server,
 the server will then poll the DB for the email given to retrieve their password. They will then use this password to decrypt the password.
 If all is correct, the client will then be sent a session key and the ip of the server they wish to talk to, encrypted with their password. And a ticket encrypted with the Secret, known only by the Proxy and the Authentication Server.  
   
 From here the client will decrypt the ip and the session key with their password, and use the session key to encrypt their login message to the proxy. They will send this along with the ticket.  
-The Proxy will use the Secret to decrypt the ticket, to get the session key and then use that to decrypt the message, if everything is correct the the client will be allowed to log in to the system.  
+The Proxy will use the Secret to decrypt the ticket, to get the session key and then use that to decrypt the message, if everything is correct the the client will be allowed to log in to the system, as we assume a truted client.  
   
 ## UL/DL  
 The client will then be led to the home page, to allow them to access the features of the distributed transparent file system. This will allow them to upload and download files.

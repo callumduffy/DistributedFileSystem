@@ -1,3 +1,4 @@
 node_modules/
 directory.db
 /directory.db
+/node_modules/

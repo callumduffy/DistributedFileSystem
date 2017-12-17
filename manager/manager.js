@@ -176,21 +176,16 @@ managerNode.post('/upload', (req,res) => {
 					  		} else {
 					    		console.log(resp.body.msg);
 					    		//now we want to add the file to the cache
-					    		var cacheReq = request.post('http://localhost:3006/addToCache', function (err, resp, bod) {
+					    		var cacheReq = request.post('http://localhost:3006/addToCache', function (err, c_resp, bod) {
 							  		if (err) {
 							    		console.log('Error sending to cache');
 							    		console.log(err.message);
 							    		deleteTempFile(filePath);
 							    		res.status(200).send('File Uploaded but error connecting to the cache.');
-							  		} else if(resp.body.status == 200){
+							  		} else (c_resp.body.status == 200){
 							    		console.log('File added to cache');
 							    		deleteTempFile(filePath);
 							    		res.status(200).send('File Uploaded and Cached.');
-							  		}
-							  		else{
-							  			console.log(resp.body.msg);
-							  			deleteTempFile(filePath);
-							  			res.status(200).send('File Uploaded but is already in cache');
 							  		}
 								});
 								var cform = cacheReq.form();
@@ -201,6 +196,9 @@ managerNode.post('/upload', (req,res) => {
 						var uform = fileReq.form();
 						uform.append('file', fs.createReadStream(filePath));
 						uform.append('fileName', fileName);
+     				}
+     				else{
+     					res.send('File of same name already uploaded, please change the name or upload a different file.');
      				}
      		});
 		}

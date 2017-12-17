@@ -18,7 +18,7 @@ clientNode.use(bodyParser.json());
 clientNode.use(bodyParser.urlencoded({ extended: true }));
 
 var paths ={};
-var pword = process.argv[2];
+var pword;
 const PORT_NUM = 3006;
 
 clientNode.get('/', (req,res) =>{
@@ -84,12 +84,13 @@ clientNode.post('/addToCache', (req,res) =>{
 		if(files.file){
 			var ttl = 3000; //amount of time file will stay in cache for
 			console.log('Received file to add to cache:' + fields.fileName);
-			cache.set(fields.fileName, files.file, ttl, function (error,value) {
+			cache.set(fields.fileName, files.file, ttl, function (error) {
 			  if (error){
 			  	console.log('Error adding to cache.');
 			  	res.send({status:404,msg:'Error adding file to cache'});
 			  }
 			});
+			console.log('here');
 			res.send({status:200,msg:'File added to cache for 5 mins (3000 secs)'});
 		}
 		else{
@@ -118,6 +119,11 @@ clientNode.post('/checkCache', (req,res) =>{
 	  	var cachedFilePath = path.join(__dirname,'/cache');
 	  	res.send({status:200, msg:'File in cache', path: path.join(cachedFilePath,fileName)});
 	}
+})
+
+clientNode.post('/storePW', (req,res) =>{
+	pword = req.body.password;
+	res.send();
 })
 
 clientNode.listen(PORT_NUM, (err) => {
